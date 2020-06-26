@@ -2,6 +2,7 @@ package directory_scaner
 
 import (
 	"io/ioutil"
+	"sync"
 )
 
 func s(d string) (result int64, need []string) {
@@ -30,33 +31,46 @@ func Scan(d string) int {
 }
 
 /////////////////////////////////////////////////////////////////////////
-func s2(d string, result chan int64) {
+func s22(d string, result chan int64, wg *sync.WaitGroup) {
+	defer wg.Done()
 	files, err := ioutil.ReadDir(d)
 	if err != nil {
 		return
 	}
-	var rrrr int64
+	wg2 := sync.WaitGroup{}
 	for _, f := range files {
 		if f.IsDir() {
-			//dd <- d + "/" + f.Name()
+			wg2.Add(1)
+			go s22(f.Name(), result, &wg2)
 		} else {
-			rrrr += f.Size()
+			result <- f.Size()
 		}
 	}
-	result <- rrrr
+	wg2.Wait()
+}
+func s2(d string, result chan int64) {
+	defer close(result)
+	files, err := ioutil.ReadDir(d)
+	if err != nil {
+		return
+	}
+	wg := sync.WaitGroup{}
+	for _, f := range files {
+		if f.IsDir() {
+			wg.Add(1)
+			go s22(d+"/"+f.Name(), result, &wg)
+		} else {
+			result <- f.Size()
+		}
+	}
+	wg.Wait()
 }
 func Scan2(d string) int {
 	result := make(chan int64)
-	need := make(chan string)
-	go func() {
-		need <- d
-	}()
-	//wg := sync.WaitGroup{}wg.Add(1)wg.Wait()
-	go s2(<-need, result)
+	go s2(d, result)
 	var resTMP int64
 	for r := range result {
 		resTMP += r
-		close(result)
 	}
 	return int(resTMP) / 1000000
 }
