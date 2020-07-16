@@ -33,6 +33,7 @@ func Scan(d string) int {
 /////////////////////////////////////////////////////////////////////////
 func s22(d string, result chan int64, wg *sync.WaitGroup) {
 	defer wg.Done()
+	//fmt.Println()
 	files, err := ioutil.ReadDir(d)
 	if err != nil {
 		return
@@ -41,7 +42,7 @@ func s22(d string, result chan int64, wg *sync.WaitGroup) {
 	for _, f := range files {
 		if f.IsDir() {
 			wg2.Add(1)
-			go s22(f.Name(), result, &wg2)
+			go s22(d+"/"+f.Name(), result, &wg2)
 		} else {
 			result <- f.Size()
 		}

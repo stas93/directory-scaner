@@ -6,8 +6,8 @@ import (
 )
 
 func main() {
-
-	fmt.Println(d.Scan("/home/stas"))
-	fmt.Println(d.Scan2("/home/stas"))
+	parse := "/home/stas"
+	fmt.Println(d.Scan(parse))
+	fmt.Println(d.Scan2(parse))
 	//fmt.Println()
 }
