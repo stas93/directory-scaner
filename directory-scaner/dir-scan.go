@@ -75,3 +75,44 @@ func Scan2(d string) int {
 	}
 	return int(resTMP) / 1000000
 }
+
+////////////////////////////
+
+func Scan3(d string) int {
+	result := make(chan int64)
+	workList := make(chan string, 2)
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		workList <- d
+	}()
+	for i := 0; i < 2; i++ {
+		go func() {
+			for work := range workList {
+				go func(work string) {
+					files, err := ioutil.ReadDir(work)
+					if err != nil {
+						panic("err")
+					}
+					for _, f := range files {
+						if f.IsDir() {
+							wg.Add(1)
+							workList <- d + "/" + f.Name()
+						} else {
+							result <- f.Size()
+						}
+					}
+				}(work)
+			}
+		}()
+	}
+	go func() {
+		wg.Wait()
+		close(workList)
+	}()
+	var resTMP int64
+	for r := range result {
+		resTMP += r
+	}
+	return int(resTMP) / 1000000
+}

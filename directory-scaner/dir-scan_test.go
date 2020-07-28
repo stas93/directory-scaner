@@ -13,6 +13,6 @@ func BenchmarkScan(b *testing.B) {
 }
 func BenchmarkScan2(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		Scan2(parse)
+		Scan3(parse)
 	}
 }
