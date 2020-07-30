@@ -1,6 +1,7 @@
 package directory_scaner
 
 import (
+	"fmt"
 	"io/ioutil"
 	"sync"
 )
@@ -77,42 +78,35 @@ func Scan2(d string) int {
 }
 
 ////////////////////////////
-
 func Scan3(d string) int {
-	result := make(chan int64)
-	workList := make(chan string, 2)
+	var resTMP int64
 	wg := sync.WaitGroup{}
+	workList := make(chan string, 2)
 	wg.Add(1)
-	go func() {
-		workList <- d
-	}()
-	for i := 0; i < 2; i++ {
-		go func() {
-			for work := range workList {
-				go func(work string) {
-					files, err := ioutil.ReadDir(work)
-					if err != nil {
-						panic("err")
-					}
-					for _, f := range files {
-						if f.IsDir() {
-							wg.Add(1)
-							workList <- d + "/" + f.Name()
-						} else {
-							result <- f.Size()
-						}
-					}
-				}(work)
-			}
-		}()
-	}
+	workList <- d
 	go func() {
 		wg.Wait()
 		close(workList)
 	}()
-	var resTMP int64
-	for r := range result {
-		resTMP += r
+	for i := 0; i < 2; i++ {
+		go func() {
+			for work := range workList {
+				files, err := ioutil.ReadDir(work)
+				if err != nil {
+					fmt.Println(err)
+				}
+				for _, f := range files {
+					if f.IsDir() {
+						wg.Add(1)
+						workList <- work + "/" + f.Name()
+					} else {
+						resTMP += f.Size()
+					}
+				}
+				wg.Done()
+			}
+
+		}()
 	}
 	return int(resTMP) / 1000000
 }
