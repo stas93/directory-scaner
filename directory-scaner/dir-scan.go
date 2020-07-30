@@ -87,7 +87,7 @@ func Scan3(d string) int {
 	go func() {
 		workList <- d
 	}()
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 1; i++ {
 		go func() {
 			for work := range workList {
 				files, err := ioutil.ReadDir(work)
